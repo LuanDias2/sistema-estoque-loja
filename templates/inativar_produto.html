@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Confirmar Inativação</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="body-centered">
+    <div class="container container-form">
+        <h1 style="text-align: center; margin-bottom: 2rem;">Tem certeza que deseja inativar o produto ''{{ produto[1] }}''?</h1>
+        
+        <p style="text-align: center; margin-bottom: 2rem;">O produto não será deletado, apenas arquivado e não aparecerá na lista de estoque principal.</p>
+
+        <form action="/inativar-produto/{{ produto[0] }}" method="post">
+            <div>
+                <label for="responsavel" style="text-align: center;">Seu Nome (Responsável pela Inativação):</label>
+                <input type="text" id="responsavel" name="nome_responsavel" required style="width: 100%; max-width: 100%;">
+            </div>
+            
+            <div class="form-actions">
+                <a href="/estoque">Cancelar</a>
+                <button type="submit">Sim, Inativar Produto</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

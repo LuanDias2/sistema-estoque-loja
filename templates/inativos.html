@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Produtos Inativos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Produtos Inativos (Arquivados)</h1>
+
+        <div class="nav-links">
+            <a href="/estoque">Voltar para o Estoque Ativo</a>
+        </div>
+        <form method="get" action="{{ url_for('ver_inativos') }}" class="search-form">
+            <input type="search" name="busca" placeholder="Buscar produto inativo..." value="{{ termo_busca or '' }}">
+            <button type="submit">Buscar</button>
+        </form>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome do Produto</th>
+                    <th>Quantidade (na inativação)</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for produto in produtos %}
+                <tr>
+                    <td>{{ produto[1] }}</td>
+                    <td>{{ produto[2] }}</td>
+                    <td class="acoes">
+                        <button class="btn btn-success" onclick="abrirModalReativar({{ produto[0] }}, '{{ produto[1] | escape }}')">Reativar</button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3">Nenhum produto inativo encontrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div id="modalReativar" class="modal-overlay">
+        <div class="modal-content">
+            <h2 id="modalTituloReativar">Reativar Produto</h2>
+            <form action="/reativar-produto-action" method="post">
+                <input type="hidden" id="produtoIdInputReativar" name="produto_id">
+                <div>
+                    <label for="responsavelReativar">Seu Nome (Responsável):</label><br>
+                    <input type="text" id="responsavelReativar" name="nome_responsavel" required>
+                </div>
+                <br>
+                <div class="modal-actions">
+                    <button type="button" onclick="fecharModal('modalReativar')">Cancelar</button>
+                    <button type="submit">Confirmar Reativação</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const modalReativar = document.getElementById('modalReativar');
+        const modalTituloReativar = document.getElementById('modalTituloReativar');
+        const produtoIdInputReativar = document.getElementById('produtoIdInputReativar');
+
+        function abrirModalReativar(produtoId, produtoNome) {
+            modalTituloReativar.textContent = `Reativar: ${produtoNome}`;
+            produtoIdInputReativar.value = produtoId;
+            modalReativar.style.display = 'block';
+        }
+
+        function fecharModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+    </script>
+</body>
+</html>

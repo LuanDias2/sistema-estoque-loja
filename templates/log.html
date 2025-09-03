@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Log de Movimentações</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="nav-links">
+            <a href="/estoque">Voltar para o Estoque</a>
+            <h1 id="log-h1">Log de Movimentações de Estoque</h1>
+        </div>
+
+        <form method="get" action="{{ url_for('ver_log') }}" class="search-form">
+            <input type="search" name="busca" placeholder="Buscar no log..." value="{{ termo_busca or '' }}">
+            <button type="submit">Buscar</button>
+        </form>
+
+        <table class="log-table">
+            <thead>
+                <tr>
+                    <th>Data e Hora</th>
+                    <th>Produto</th>
+                    <th class="coluna-tipo">Tipo</th>
+                    <th>Quantidade</th>
+                    <th>Responsável</th>
+                    <th>Nota Fiscal</th>
+                    <th>Valor Unitário</th> <th>Valor Total</th>   </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log[0].strftime('%d/%m/%Y %H:%M:%S') }}</td>
+                    <td>{{ log[1] }}</td>
+                    <td>{{ log[2] }}</td>
+                    <td>{{ log[3] }}</td>
+                    <td>{{ log[4] }}</td>
+                    <td>{{ log[5] if log[5] is not none else 'N/A' }}</td>
+                    <td>R$ {{ "%.2f" | format(log[6] | float) }}</td>
+                    <td>R$ {{ "%.2f" | format(log[7] | float) }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8">Nenhuma movimentação registrada.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        
+    </div>
+</body>
+</html>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Sucesso!</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="body-centered">
+    <div class="container container-form" style="text-align: center;">
+        <h1>Transferência Registrada com Sucesso!</h1>
+
+        <p style="margin: 20px 0;">O estoque foi atualizado e o comprovante em PDF foi gerado.</p>
+
+        <div class="form-actions">
+            <a href="{{ url_for('download_arquivo', nome_arquivo=nome_pdf) }}">Baixar Comprovante (PDF)</a>
+
+            <a href="{{ url_for('ver_estoque') }}">Voltar ao Estoque</a>
+        </div>
+    </div>
+</body>
+</html>

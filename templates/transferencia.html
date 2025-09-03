@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Transferência de Estoque</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container container-medium"> 
+        <h1>Transferência de Estoque</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="error-flash" style="background-color: #ffebee; color: #c62828;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('transferencia') }}" method="post">
+            <div style="display: flex; gap: 20px; align-items: flex-end;">
+                <div style="flex: 1;">
+                    <label for="origem">Loja de Origem:</label>
+                    <input type="text" id="origem" name="loja_origem" required>
+                </div>
+                <div style="flex: 1;">
+                    <label for="destino">Loja de Destino:</label>
+                    <input type="text" id="destino" name="loja_destino" required>
+                </div>
+                <div style="flex: 1;">
+                    <label for="responsavel">Seu Nome (Responsável):</label>
+                    <input type="text" id="responsavel" name="nome_responsavel" required>
+                </div>
+            </div>
+
+            <hr style="margin: 20px 0;">
+
+            <h3>Selecione os Produtos e Quantidades</h3>
+            <table class="transfer-table">
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Estoque Atual</th>
+                        <th>Quantidade a Transferir</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for produto in produtos %}
+                    <tr>
+                        <td>{{ produto[1] }}</td>
+                        <td>{{ produto[2] }}</td>
+                        <td>
+                            <input type="number" name="quantidade_{{ produto[0] }}" placeholder="0" min="0" max="{{ produto[2] }}" style="max-width: 100%; padding: 8px;">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="form-actions">
+                <a href="/estoque">Cancelar</a>
+                <button type="submit">Gerar Comprovante e Transferir</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

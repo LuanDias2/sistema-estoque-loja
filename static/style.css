@@ -1,0 +1,350 @@
+/* --- Estilos Gerais e de Login --- */
+
+/* Reset básico */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f0f2f5;
+    color: #333;
+}
+
+/* --- Estilos ESPECÍFICOS para a Página de Login --- */
+
+/* Regra para centralizar o conteúdo na vertical e horizontal */
+body.login-page,
+body.body-centered {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.login-container {
+    background-color: white;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+}
+
+.login-container h2 {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #359443;
+}
+
+.login-container label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.login-container input[type="text"],
+.login-container input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.login-container button[type="submit"] {
+    width: 100%;
+    padding: 12px;
+    background-color: #359443;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.login-container button[type="submit"]:hover {
+    background-color: #2a7a36;
+}
+
+.error-flash {
+    background-color: #ffebee;
+    color: #c62828;
+    padding: 10px;
+    border-radius: 4px;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+
+/* --- Estilos para as Páginas de Conteúdo (Estoque, Log, etc.) --- */
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 30px auto;
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.container-form {
+    max-width: 600px;
+}
+
+.container h1 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* Variação do container para páginas médias, como a de transferência */
+.container-medium {
+    max-width: 900px; /* Um bom tamanho intermediário. Sinta-se à vontade para ajustar! */
+}
+/* --- Estilos para Formulários INTERNOS (Adicionar Produto, etc.) --- */
+
+form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    text-align: left;
+}
+
+form input[type="text"],
+form input[type="number"],
+form textarea {
+    width: 100%;
+    max-width: 500px;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 16px;
+}
+
+.form-actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.form-actions button,
+.form-actions a {
+    flex: 1;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 4px;
+    text-decoration: none;
+    cursor: pointer;
+    border: 2px solid;
+    transition: all 0.2s ease-in-out;
+}
+
+.form-actions button {
+    background-color: #359443;
+    border-color: #359443;
+    color: white;
+}
+.form-actions button:hover {
+    background-color: #2a7a36;
+    border-color: #2a7a36;
+}
+
+.form-actions a {
+    background-color: #dc3545;
+    color: white;
+    border-color: #dc3545;
+}
+.form-actions a:hover {
+    background-color: #c82333;
+    border-color: #c82333;
+}
+
+
+/* --- Estilos para Tabelas --- */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    table-layout: fixed; 
+}
+
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: left;
+    vertical-align: middle;
+    overflow-wrap: break-word;
+    word-wrap: break-word; 
+}
+
+
+thead th {
+    background-color: #359443;
+    color: white;
+    font-weight: bold;
+}
+tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* Estilos para botões de ação na tabela */
+/* A ÚNICA ALTERAÇÃO FOI ADICIONAR width: 230px AQUI */
+td.acoes { 
+    text-align: center; 
+    white-space: nowrap; 
+    width: 230px;
+}
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+}
+.btn { display: inline-flex; justify-content: center; align-items: center; font-weight: bold; cursor: pointer; border: 1px solid transparent; text-decoration: none; transition: all 0.2s ease-in-out; color: white; flex-shrink: 0;}
+.btn-increase, .btn-decrease { width: 30px; height: 30px; font-size: 20px; border-radius: 50%; }
+.btn-primary, .btn-danger, .btn-success { width: auto; padding: 6px 12px; font-size: 14px; border-radius: 4px; }
+/* Paleta de cores para as ações */
+.btn-primary { background-color: #007bff; border-color: #007bff; }
+.btn-primary:hover { background-color: #0056b3; }
+.btn-increase { background-color: #28a745; border-color: #28a745; }
+.btn-increase:hover { background-color: #218838; }
+.btn-decrease { background-color: #ffc107; color: #212529; border-color: #ffc107; }
+.btn-decrease:hover { background-color: #e0a800; }
+.btn-danger { background-color: #dc3545; border-color: #dc3545; }
+.btn-danger:hover { background-color: #c82333; }
+.btn-success { width: auto; padding: 6px 12px; font-size: 14px; border-radius: 4px; background-color: #28a745; border-color: #28a745; }
+.btn-success:hover { background-color: #218838; }
+
+/* Estilos para os links de navegação */
+.nav-links { 
+    margin-bottom: 20px; 
+}
+.nav-links a {
+    display: inline-block;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    background-color: #359443;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+}
+
+.nav-links a:hover {
+    background-color: #2a7a36; 
+}
+
+/* Estilos para modais (pop-ups) */
+.modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; }
+.modal-content { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; padding: 30px; border-radius: 8px; z-index: 1001; width: 90%; max-width: 500px; }
+.modal-content h2 { margin-bottom: 20px; }
+
+
+
+/* --- Estilos para os botões dos Modais (Pop-ups) --- */
+
+.modal-actions {
+    margin-top: 25px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-start;
+}
+
+.modal-actions button {
+    flex-grow: 0; 
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Botão Primário (Confirmar, Salvar) */
+.modal-actions button[type="submit"] {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+.modal-actions button[type="submit"]:hover {
+    background-color: #218838;
+    border-color: #218838;
+}
+
+/* Botão Secundário (Cancelar) */
+.modal-actions button[type="button"] {
+    background-color: #6c757d; 
+    border-color: #6c757d;
+    color: white;
+}
+.modal-actions button[type="button"]:hover {
+    background-color: #5a6268;
+    border-color: #5a6268;
+}
+
+#log-h1 {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+
+/* Estilos para o formulário de busca */
+.search-form {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+}
+.search-form input[type="search"] {
+    flex-grow: 1; 
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+}
+.search-form button {
+    padding: 10px 20px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+.search-form button:hover {
+    background-color: #5a6268;
+}
+
+/* Estilo específico para centralizar a tabela da página de transferência */
+.transfer-table th,
+.transfer-table td {
+    text-align: center;
+}
+
+/* Pequeno ajuste para o nome do produto continuar alinhado à esquerda */
+.transfer-table td:first-child,
+.transfer-table th:first-child {
+    text-align: left;
+}
+
+/* Ajuste de largura para a terceira coluna da tabela de log */
+.log-table th:nth-child(3),
+.log-table td:nth-child(3) {
+    width: 150px;
+}
