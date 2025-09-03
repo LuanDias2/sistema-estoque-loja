@@ -5,6 +5,15 @@ from functools import wraps
 from fpdf import FPDF
 import os
 from datetime import datetime
+import pytz
+
+
+def formatar_data_br(dt_utc):
+    if dt_utc is None:
+        return ""
+    fuso_horario_brasil = pytz.timezone('America/Sao_Paulo')
+    dt_brasil = dt_utc.astimezone(fuso_horario_brasil)
+    return dt_brasil.strftime('%d/%m/%Y %H:%M:%S')
 
 
 def login_required(f):
@@ -17,10 +26,12 @@ def login_required(f):
     return decorated_function
 
 app = Flask(__name__)
+app.jinja_env.filters['datetime_br'] = formatar_data_br
 app.secret_key = 'ruadasfigueirasnumero8'
 
 # A única variável de ambiente que precisamos
 DATABASE_URL = os.environ.get('DATABASE_URL')
+
 
 @app.route('/')
 @login_required
@@ -328,7 +339,7 @@ def transferencia():
             pdf.cell(0, 10, f'Loja de Origem: {loja_origem}', 0, 1)
             pdf.cell(0, 10, f'Loja de Destino: {loja_destino}', 0, 1)
             pdf.cell(0, 10, f'Responsável pela Transferência: {responsavel}', 0, 1)
-            pdf.cell(0, 10, f"Data da Operação: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}", 0, 1)
+            pdf.cell(0, 10, f"Data da Operação: {formatar_data_br(datetime.now(pytz.utc))}", 0, 1)
             pdf.ln(10)
             pdf.set_font('Arial', 'B', 12)
             pdf.cell(130, 10, 'Produto', 1, 0, 'C')
