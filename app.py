@@ -367,53 +367,7 @@ def transferencia():
 def download_arquivo(nome_arquivo):
     return send_from_directory('static', nome_arquivo, as_attachment=True)
 
-# ROTA TEMPORÁRIA E SECRETA PARA CONFIGURAÇÃO INICIAL NA NUVEM
-@app.route('/configuracao-inicial-secreta-12345')
-def setup_inicial_secreto():
-    # --- DEFINA O USUÁRIO E SENHA DA DONA DA LOJA AQUI ---
-    usuario_admin = 'admin' # Ou o nome de usuário que preferir
-    senha_admin = '91844720' # <-- TROQUE PELA SENHA REAL E SEGURA
 
-    print("INICIANDO CONFIGURAÇÃO NA NUVEM...")
-    try:
-        conn = psycopg2.connect(DATABASE_URL)
-        cursor = conn.cursor()
-
-        # Lógica do setup_database.py
-        print("Criando tabelas...")
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS produtos (
-            id SERIAL PRIMARY KEY, nome TEXT NOT NULL UNIQUE, quantidade INTEGER NOT NULL,
-            ativo BOOLEAN DEFAULT TRUE, valor_unitario NUMERIC(10, 2) DEFAULT 0.00 );
-        """)
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS usuarios (
-            id SERIAL PRIMARY KEY, usuario TEXT NOT NULL UNIQUE, senha TEXT NOT NULL );
-        """)
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS movimentacoes (
-            id SERIAL PRIMARY KEY, produto_id INTEGER NOT NULL REFERENCES produtos(id) ON DELETE CASCADE,
-            tipo_movimentacao TEXT NOT NULL, quantidade INTEGER NOT NULL, nome_responsavel TEXT NOT NULL,
-            nota_fiscal TEXT, data_hora TIMESTAMPTZ DEFAULT NOW(), valor_unitario NUMERIC(10, 2) DEFAULT 0.00,
-            valor_total NUMERIC(10, 2) DEFAULT 0.00 );
-        """)
-        print("Tabelas criadas.")
-
-        # Lógica do create_admin_user.py
-        senha_hash = generate_password_hash(senha_admin)
-        print("Limpando usuários antigos e criando o administrador...")
-        cursor.execute("TRUNCATE TABLE usuarios RESTART IDENTITY") # Limpa a tabela de forma segura
-        cursor.execute("INSERT INTO usuarios (usuario, senha) VALUES (%s, %s)", (usuario_admin, senha_hash))
-        print("Usuário administrador criado.")
-
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        return "<h1>CONFIGURAÇÃO INICIAL CONCLUÍDA COM SUCESSO!</h1><p>Por favor, delete esta rota ('/configuracao-inicial-secreta-12345') do seu arquivo app.py e envie para o GitHub novamente.</p>"
-
-    except Exception as e:
-        return f"<h1>Ocorreu um erro durante a configuração:</h1><p>{e}</p>"
 
 if __name__ == '__main__':
     app.run(debug=True)
