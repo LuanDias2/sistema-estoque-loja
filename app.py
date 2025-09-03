@@ -33,10 +33,6 @@ app.secret_key = 'ruadasfigueirasnumero8'
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 
-@app.route('/')
-@login_required
-def pagina_inicial():
-    return render_template('index.html')
 
 @app.route('/estoque')
 @login_required
@@ -212,7 +208,7 @@ def aumentar_estoque_action():
     conn.close()
     return redirect(url_for('ver_estoque'))
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         usuario_form = request.form['usuario']
