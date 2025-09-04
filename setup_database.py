@@ -52,7 +52,7 @@ try:
 except Exception as e:
     print(f"Ocorreu um erro: {e}")
 finally:
-    if 'conn' in locals() and conn.is_connected():
+    if 'conn' in locals() and not conn.closed:
         cursor.close()
         conn.close()
         print("Conexão com PostgreSQL fechada.")
