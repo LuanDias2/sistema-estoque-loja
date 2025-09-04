@@ -1,64 +1,58 @@
-import mysql.connector
-from mysql.connector import errorcode
+import psycopg2
+import os
 
-# --- COLOQUE SUAS 4 INFORMAÇÕES DA HOSTINGER AQUI ---
-DB_CONFIG = {
-    'user': 'u395160423_loja_admin',
-    'password': '@Luan4556',
-    'host': 'localhost', # Geralmente 'localhost'
-    'database': 'u395160423_loja_estoque'
-}
+# Lê a conexão do ambiente, que será fornecida pelo Fly.io
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
 try:
-    print("Conectando ao banco de dados MySQL...")
-    conn = mysql.connector.connect(**DB_CONFIG)
+    print("Conectando ao banco de dados PostgreSQL...")
+    # Volta a usar a conexão do psycopg2
+    conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
 
     print("Criando a tabela 'produtos'...")
-    # SQL ajustado para MySQL: INT AUTO_INCREMENT, VARCHAR, DECIMAL, ENGINE
+    # SQL revertido para a sintaxe do PostgreSQL (SERIAL, TEXT, etc.)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS produtos (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        nome VARCHAR(255) NOT NULL UNIQUE,
-        quantidade INT NOT NULL,
+        id SERIAL PRIMARY KEY,
+        nome TEXT NOT NULL UNIQUE,
+        quantidade INTEGER NOT NULL,
         ativo BOOLEAN DEFAULT TRUE,
-        valor_unitario DECIMAL(10, 2) DEFAULT 0.00
-    ) ENGINE=InnoDB;
+        valor_unitario NUMERIC(10, 2) DEFAULT 0.00
+    );
     """)
 
     print("Criando a tabela 'usuarios'...")
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS usuarios (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        usuario VARCHAR(255) NOT NULL UNIQUE,
-        senha VARCHAR(255) NOT NULL
-    ) ENGINE=InnoDB;
+        id SERIAL PRIMARY KEY,
+        usuario TEXT NOT NULL UNIQUE,
+        senha TEXT NOT NULL
+    );
     """)
 
     print("Criando a tabela 'movimentacoes'...")
-    # SQL ajustado para MySQL: DATETIME, CURRENT_TIMESTAMP
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS movimentacoes (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        produto_id INT NOT NULL,
-        tipo_movimentacao VARCHAR(50) NOT NULL,
-        quantidade INT NOT NULL,
-        nome_responsavel VARCHAR(255) NOT NULL,
-        nota_fiscal VARCHAR(255),
-        data_hora DATETIME DEFAULT CURRENT_TIMESTAMP,
-        valor_unitario DECIMAL(10, 2) DEFAULT 0.00,
-        valor_total DECIMAL(10, 2) DEFAULT 0.00,
-        FOREIGN KEY (produto_id) REFERENCES produtos(id) ON DELETE CASCADE
-    ) ENGINE=InnoDB;
+        id SERIAL PRIMARY KEY,
+        produto_id INTEGER NOT NULL REFERENCES produtos(id) ON DELETE CASCADE,
+        tipo_movimentacao TEXT NOT NULL,
+        quantidade INTEGER NOT NULL,
+        nome_responsavel TEXT NOT NULL,
+        nota_fiscal TEXT,
+        data_hora TIMESTAMPTZ DEFAULT NOW(),
+        valor_unitario NUMERIC(10, 2) DEFAULT 0.00,
+        valor_total NUMERIC(10, 2) DEFAULT 0.00
+    );
     """)
 
     conn.commit()
-    print("\nTabelas prontas para o MySQL!")
+    print("\nEstrutura de tabelas para PostgreSQL está pronta!")
 
-except mysql.connector.Error as err:
-    print(f"Ocorreu um erro: {err}")
+except Exception as e:
+    print(f"Ocorreu um erro: {e}")
 finally:
     if 'conn' in locals() and conn.is_connected():
         cursor.close()
         conn.close()
-        print("Conexão com MySQL fechada.")
+        print("Conexão com PostgreSQL fechada.")

@@ -1,40 +1,28 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory
 from werkzeug.security import generate_password_hash, check_password_hash
-import mysql.connector # MUDANÇA: Usando o conector do MySQL
-from mysql.connector import errorcode
+from werkzeug.middleware.proxy_fix import ProxyFix
+import psycopg2 # Revertido para psycopg2
 from functools import wraps
 from fpdf import FPDF
 import os
 from datetime import datetime
-
-# --- Decorador de Login (sem alterações) ---
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'loggedin' not in session:
-            flash('Por favor, faça o login para acessar esta página.')
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
+import pytz # Revertido para usar pytz para fuso horário
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 app.secret_key = 'ruadasfigueirasnumero8'
 
-# MUDANÇA: Bloco de configuração para o banco de dados MySQL da Hostinger
-DB_CONFIG = {
-    'user': 'SEU_USUARIO_COMPLETO_DO_BANCO',
-    'password': 'SUA_SENHA_DO_BANCO',
-    'host': 'SEU_HOST_DO_BANCO',
-    'database': 'SEU_NOME_COMPLETO_DO_BANCO'
-}
+# Revertido para usar DATABASE_URL do ambiente (padrão do Fly.io/Render)
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
-# --- Filtro de Data e Hora (simplificado, sem pytz) ---
-def formatar_data_br(dt):
-    if dt is None:
+# --- Filtro de Data e Hora com Fuso Horário ---
+def formatar_data_br(dt_utc):
+    if dt_utc is None:
         return ""
-    return dt.strftime('%d/%m/%Y %H:%M:%S')
+    fuso_horario_brasil = pytz.timezone('America/Sao_Paulo')
+    dt_brasil = dt_utc.astimezone(fuso_horario_brasil)
+    return dt_brasil.strftime('%d/%m/%Y %H:%M:%S')
 app.jinja_env.filters['datetime_br'] = formatar_data_br
-
 
 # --- Rotas da Aplicação ---
 
@@ -46,12 +34,12 @@ def pagina_inicial():
 @login_required
 def ver_estoque():
     termo_busca = request.args.get('busca', '')
-    conn = mysql.connector.connect(**DB_CONFIG) # MUDANÇA
+    conn = psycopg2.connect(DATABASE_URL) # Revertido
     cursor = conn.cursor()
     sql_query = "SELECT * FROM produtos WHERE ativo = TRUE"
     params = []
     if termo_busca:
-        sql_query += " AND nome LIKE %s" # MUDANÇA: LIKE em vez de ILIKE
+        sql_query += " AND nome ILIKE %s" # Revertido para ILIKE
         params.append(f"%{termo_busca}%")
     sql_query += " ORDER BY nome ASC"
     cursor.execute(sql_query, params)
@@ -59,7 +47,6 @@ def ver_estoque():
     cursor.close()
     conn.close()
     return render_template('estoque.html', produtos=lista_produtos, termo_busca=termo_busca)
-
 
 @app.route('/adicionar-produto', methods=['GET', 'POST'])
 @login_required
@@ -70,11 +57,14 @@ def adicionar_produto():
         valor_unitario = float(request.form['valor_unitario'])
         responsavel = request.form['nome_responsavel']
         nota_fiscal = request.form['nota_fiscal']
-        conn = mysql.connector.connect(**DB_CONFIG) # MUDANÇA
+        conn = psycopg2.connect(DATABASE_URL) # Revertido
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO produtos (nome, quantidade, valor_unitario) VALUES (%s, %s, %s)",
+        
+        # Revertido para o padrão do PostgreSQL para pegar o ID
+        cursor.execute("INSERT INTO produtos (nome, quantidade, valor_unitario) VALUES (%s, %s, %s) RETURNING id",
                        (nome, quantidade, valor_unitario))
-        novo_produto_id = cursor.lastrowid # MUDANÇA: Padrão do MySQL Connector
+        novo_produto_id = cursor.fetchone()[0]
+        
         valor_total_movimentacao = quantidade * valor_unitario
         cursor.execute("""
             INSERT INTO movimentacoes (produto_id, tipo_movimentacao, quantidade, nome_responsavel, nota_fiscal, valor_unitario, valor_total) 
@@ -87,8 +77,7 @@ def adicionar_produto():
         return redirect(url_for('ver_estoque'))
     return render_template('adicionar_produto.html')
 
-# (O resto de todas as suas funções, já adaptadas para MySQL, estão abaixo)
-
+# (Todas as outras funções também foram revertidas para usar psycopg2 e a sintaxe do PostgreSQL)
 @app.route('/editar-produto-action', methods=['POST'])
 @login_required
 def editar_produto_action():
@@ -96,7 +85,7 @@ def editar_produto_action():
     nome = request.form['nome_produto']
     valor_unitario = float(request.form['valor_unitario'])
     responsavel = request.form['nome_responsavel']
-    conn = mysql.connector.connect(**DB_CONFIG)
+    conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
     cursor.execute("SELECT quantidade FROM produtos WHERE id = %s", (produto_id,))
     quantidade_atual = cursor.fetchone()[0]
@@ -116,7 +105,7 @@ def editar_produto_action():
 @app.route('/inativar-produto/<int:id>', methods=['GET', 'POST'])
 @login_required
 def inativar_produto(id):
-    conn = mysql.connector.connect(**DB_CONFIG)
+    conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
     if request.method == 'POST':
         responsavel = request.form['nome_responsavel']
@@ -148,7 +137,7 @@ def diminuir_estoque_action():
     produto_id = request.form['produto_id']
     quantidade_a_remover = int(request.form['quantidade'])
     responsavel = request.form['nome_responsavel']
-    conn = mysql.connector.connect(**DB_CONFIG)
+    conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
     cursor.execute("SELECT quantidade, valor_unitario FROM produtos WHERE id = %s", (produto_id,))
     produto_dados = cursor.fetchone()
@@ -170,7 +159,7 @@ def diminuir_estoque_action():
 @login_required
 def ver_log():
     termo_busca = request.args.get('busca', '')
-    conn = mysql.connector.connect(**DB_CONFIG)
+    conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
     sql = """
         SELECT m.data_hora, p.nome, m.tipo_movimentacao, m.quantidade, m.nome_responsavel, m.nota_fiscal, m.valor_unitario, m.valor_total
@@ -178,7 +167,7 @@ def ver_log():
     """
     params = []
     if termo_busca:
-        sql += " WHERE (p.nome LIKE %s OR m.tipo_movimentacao LIKE %s OR m.nome_responsavel LIKE %s OR m.nota_fiscal LIKE %s)"
+        sql += " WHERE (p.nome ILIKE %s OR m.tipo_movimentacao ILIKE %s OR m.nome_responsavel ILIKE %s OR m.nota_fiscal ILIKE %s)"
         params = [f"%{termo_busca}%"] * 4
     sql += " ORDER BY m.data_hora DESC"
     cursor.execute(sql, params)
@@ -194,7 +183,7 @@ def aumentar_estoque_action():
     quantidade_a_adicionar = int(request.form['quantidade'])
     responsavel = request.form['nome_responsavel']
     nota_fiscal = request.form['nota_fiscal']
-    conn = mysql.connector.connect(**DB_CONFIG)
+    conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
     cursor.execute("SELECT valor_unitario FROM produtos WHERE id = %s", (produto_id,))
     valor_unitario_atual = float(cursor.fetchone()[0])
@@ -209,79 +198,10 @@ def aumentar_estoque_action():
     conn.close()
     return redirect(url_for('ver_estoque'))
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        usuario_form = request.form['usuario']
-        senha_form = request.form['senha']
-        conn = mysql.connector.connect(**DB_CONFIG)
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM usuarios WHERE usuario = %s", (usuario_form,))
-        user_data = cursor.fetchone()
-        cursor.close()
-        conn.close()
-        if user_data and check_password_hash(user_data[2], senha_form):
-            session['loggedin'] = True
-            session['id'] = user_data[0]
-            session['username'] = user_data[1]
-            return redirect(url_for('ver_estoque'))
-        else:
-            flash('Usuário ou senha incorretos.')
-    return render_template('login.html')
-
-@app.route('/logout')
-def logout():
-    session.pop('loggedin', None)
-    session.pop('id', None)
-    session.pop('username', None)
-    return redirect(url_for('login'))
-
-@app.route('/inativos')
-@login_required
-def ver_inativos():
-    termo_busca = request.args.get('busca', '')
-    conn = mysql.connector.connect(**DB_CONFIG)
-    cursor = conn.cursor()
-    sql = "SELECT * FROM produtos WHERE ativo = FALSE"
-    params = []
-    if termo_busca:
-        sql += " AND nome LIKE %s"
-        params.append(f"%{termo_busca}%")
-    sql += " ORDER BY nome ASC"
-    cursor.execute(sql, params)
-    lista_produtos_inativos = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return render_template('inativos.html', produtos=lista_produtos_inativos, termo_busca=termo_busca)
-
-@app.route('/reativar-produto-action', methods=['POST'])
-@login_required
-def reativar_produto_action():
-    produto_id = request.form['produto_id']
-    responsavel = request.form['nome_responsavel']
-    conn = mysql.connector.connect(**DB_CONFIG)
-    cursor = conn.cursor()
-    cursor.execute("SELECT quantidade, valor_unitario FROM produtos WHERE id = %s", (produto_id,))
-    produto_dados = cursor.fetchone()
-    quantidade_atual = produto_dados[0]
-    valor_unitario_atual = float(produto_dados[1])
-    valor_total_atual = quantidade_atual * valor_unitario_atual
-    cursor.execute("UPDATE produtos SET ativo = TRUE WHERE id = %s", (produto_id,))
-    cursor.execute("""
-        INSERT INTO movimentacoes (produto_id, tipo_movimentacao, quantidade, nome_responsavel, nota_fiscal, valor_unitario, valor_total) 
-        VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-        (produto_id, 'REATIVAÇÃO', quantidade_atual, responsavel, 'N/A', valor_unitario_atual, valor_total_atual))
-    conn.commit()
-    cursor.close()
-    conn.close()
-    flash(f'Produto reativado com sucesso!', 'info')
-    return redirect(url_for('ver_estoque'))
-
-
 @app.route('/transferencia', methods=['GET', 'POST'])
 @login_required
 def transferencia():
-    conn = mysql.connector.connect(**DB_CONFIG)
+    conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
     if request.method == 'POST':
         cursor.execute("SELECT * FROM produtos WHERE ativo = TRUE ORDER BY nome ASC")
@@ -331,15 +251,14 @@ def transferencia():
             pdf.cell(0, 10, f'Loja de Origem: {loja_origem}', 0, 1)
             pdf.cell(0, 10, f'Loja de Destino: {loja_destino}', 0, 1)
             pdf.cell(0, 10, f'Responsável pela Transferência: {responsavel}', 0, 1)
-            pdf.cell(0, 10, f"Data da Operação: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}", 0, 1)
+            pdf.cell(0, 10, f"Data da Operação: {formatar_data_br(datetime.now(pytz.utc))}", 0, 1)
             pdf.ln(10)
             pdf.set_font('Arial', 'B', 12)
             pdf.cell(130, 10, 'Produto', 1, 0, 'C')
             pdf.cell(60, 10, 'Quantidade', 1, 1, 'C')
             pdf.set_font('Arial', '', 12)
             for item in produtos_transferidos:
-                # MUDANÇA: Remoção do .encode() que não é necessário para MySQL
-                pdf.cell(130, 10, item['nome'], 1, 0)
+                pdf.cell(130, 10, item['nome'].encode('latin-1', 'replace').decode('latin-1'), 1, 0)
                 pdf.cell(60, 10, str(item['quantidade']), 1, 1, 'C')
             pdf.ln(20)
             pdf.cell(0, 10, 'Data de Entrega: ____/____/______', 0, 1)
@@ -366,6 +285,76 @@ def transferencia():
 @login_required
 def download_arquivo(nome_arquivo):
     return send_from_directory('static', nome_arquivo, as_attachment=True)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if 'loggedin' in session:
+        return redirect(url_for('ver_estoque'))
+    if request.method == 'POST':
+        usuario_form = request.form['usuario']
+        senha_form = request.form['senha']
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM usuarios WHERE usuario = %s", (usuario_form,))
+        user_data = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        if user_data and check_password_hash(user_data[2], senha_form):
+            session['loggedin'] = True
+            session['id'] = user_data[0]
+            session['username'] = user_data[1]
+            return redirect(url_for('ver_estoque'))
+        else:
+            flash('Usuário ou senha incorretos.')
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('loggedin', None)
+    session.pop('id', None)
+    session.pop('username', None)
+    return redirect(url_for('login'))
+
+@app.route('/inativos')
+@login_required
+def ver_inativos():
+    termo_busca = request.args.get('busca', '')
+    conn = psycopg2.connect(DATABASE_URL)
+    cursor = conn.cursor()
+    sql = "SELECT * FROM produtos WHERE ativo = FALSE"
+    params = []
+    if termo_busca:
+        sql += " AND nome ILIKE %s"
+        params.append(f"%{termo_busca}%")
+    sql += " ORDER BY nome ASC"
+    cursor.execute(sql, params)
+    lista_produtos_inativos = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return render_template('inativos.html', produtos=lista_produtos_inativos, termo_busca=termo_busca)
+
+@app.route('/reativar-produto-action', methods=['POST'])
+@login_required
+def reativar_produto_action():
+    produto_id = request.form['produto_id']
+    responsavel = request.form['nome_responsavel']
+    conn = psycopg2.connect(DATABASE_URL)
+    cursor = conn.cursor()
+    cursor.execute("SELECT quantidade, valor_unitario FROM produtos WHERE id = %s", (produto_id,))
+    produto_dados = cursor.fetchone()
+    quantidade_atual = produto_dados[0]
+    valor_unitario_atual = float(produto_dados[1])
+    valor_total_atual = quantidade_atual * valor_unitario_atual
+    cursor.execute("UPDATE produtos SET ativo = TRUE WHERE id = %s", (produto_id,))
+    cursor.execute("""
+        INSERT INTO movimentacoes (produto_id, tipo_movimentacao, quantidade, nome_responsavel, nota_fiscal, valor_unitario, valor_total) 
+        VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+        (produto_id, 'REATIVAÇÃO', quantidade_atual, responsavel, 'N/A', valor_unitario_atual, valor_total_atual))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    flash(f'Produto reativado com sucesso!', 'info')
+    return redirect(url_for('ver_estoque'))
 
 if __name__ == '__main__':
     app.run(debug=True)

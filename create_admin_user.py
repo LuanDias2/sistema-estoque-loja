@@ -1,13 +1,9 @@
 from werkzeug.security import generate_password_hash
-import mysql.connector
+import psycopg2
+import os
 
-# --- COLOQUE SUAS 4 INFORMAÇÕES DA HOSTINGER AQUI ---
-DB_CONFIG = {
-    'user': 'u395160423_loja_admin',
-    'password': '@Luan4556',
-    'host': 'localhost', # Geralmente 'localhost'
-    'database': 'u395160423_loja_estoque'
-}
+# Lê a conexão do ambiente, que será fornecida pelo Fly.io
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
 usuario = input("Digite o nome do usuário administrador: ")
 senha = input(f"Digite a senha para o usuário '{usuario}': ")
@@ -15,13 +11,13 @@ senha = input(f"Digite a senha para o usuário '{usuario}': ")
 senha_hash = generate_password_hash(senha)
 
 try:
-    # Nova forma de conectar, específica para MySQL
-    conn = mysql.connector.connect(**DB_CONFIG)
+    # Volta a usar a conexão do psycopg2
+    conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
     
     print("Limpando usuários antigos...")
-    # TRUNCATE TABLE é um comando eficiente para zerar a tabela no MySQL
-    cursor.execute("TRUNCATE TABLE usuarios")
+    # TRUNCATE TABLE ... RESTART IDENTITY é a forma do PostgreSQL de zerar a tabela e o contador de IDs
+    cursor.execute("TRUNCATE TABLE usuarios RESTART IDENTITY")
 
     print(f"Criando o usuário '{usuario}'...")
     cursor.execute("INSERT INTO usuarios (usuario, senha) VALUES (%s, %s)", (usuario, senha_hash))
@@ -30,10 +26,10 @@ try:
     
     print("\nUsuário administrador criado com sucesso!")
 
-except mysql.connector.Error as err:
-    print(f"Ocorreu um erro: {err}")
+except Exception as e:
+    print(f"Ocorreu um erro: {e}")
 finally:
-    if 'conn' in locals() and conn.is_connected():
+    if 'conn' in locals():
         cursor.close()
         conn.close()
-        print("Conexão com MySQL fechada.")
+        print("Conexão com PostgreSQL fechada.")
