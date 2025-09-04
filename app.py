@@ -12,6 +12,16 @@ app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 app.secret_key = 'ruadasfigueirasnumero8'
 
+# A DEFINIÇÃO DO NOSSO "SEGURANÇA"
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'loggedin' not in session:
+            flash('Por favor, faça o login para acessar esta página.')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 # Revertido para usar DATABASE_URL do ambiente (padrão do Fly.io/Render)
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
